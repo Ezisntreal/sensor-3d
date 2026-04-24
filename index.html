@@ -1,571 +1,803 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hoa Binh Hydropower Plant — 3D Simulation</title>
-<style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{overflow:hidden;font-family:'Segoe UI',system-ui,Arial,sans-serif;background:#000}
-  canvas{display:block}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hydropower Plant — 3D Simulation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box
+        }
 
-  #loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
-    background:#0d1117;color:#e6edf3;z-index:9999;font-size:17px;flex-direction:column;gap:18px;
-    transition:opacity .6s}
-  #loading.hidden{opacity:0;pointer-events:none}
-  .spinner{width:44px;height:44px;border:4px solid rgba(255,255,255,.12);
-    border-top:4px solid #58a6ff;border-radius:50%;animation:spin .9s linear infinite}
-  @keyframes spin{to{transform:rotate(360deg)}}
+        body {
+            overflow: hidden;
+            font-family: 'Segoe UI', system-ui, Arial, sans-serif;
+            background: #000
+        }
 
-  #ui{position:absolute;top:14px;left:14px;z-index:100;display:flex;flex-direction:column;gap:5px}
-  .btn{padding:7px 13px;background:rgba(13,17,23,.88);color:#8b949e;
-    border:1px solid rgba(255,255,255,.1);border-radius:6px;cursor:pointer;font-size:11.5px;
-    transition:all .2s;text-align:left;font-family:inherit;white-space:nowrap}
-  .btn:hover{background:rgba(22,27,34,.95);color:#e6edf3}
-  .btn.active{border-color:#58a6ff;color:#58a6ff}
+        canvas {
+            display: block
+        }
 
-  #info{position:absolute;top:14px;right:14px;z-index:100;background:rgba(13,17,23,.9);
-    color:#c9d1d9;padding:14px 16px;border-radius:8px;font-size:11.5px;min-width:190px;
-    border:1px solid rgba(255,255,255,.08);line-height:1.9}
-  #info h3{margin-bottom:6px;font-size:14px;color:#58a6ff;
-    border-bottom:1px solid rgba(255,255,255,.08);padding-bottom:5px}
-  #info hr{border-color:rgba(255,255,255,.06);margin:6px 0}
+        #loading {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0d1117;
+            color: #e6edf3;
+            z-index: 9999;
+            font-size: 17px;
+            flex-direction: column;
+            gap: 18px;
+            transition: opacity .6s
+        }
 
-  #legend{position:absolute;bottom:56px;right:14px;z-index:100;background:rgba(13,17,23,.9);
-    color:#8b949e;padding:10px 14px;border-radius:8px;font-size:10.5px;
-    border:1px solid rgba(255,255,255,.08)}
-  .lg{display:flex;align-items:center;gap:7px;margin:3px 0}
-  .ld{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+        #loading.hidden {
+            opacity: 0;
+            pointer-events: none
+        }
 
-  #tooltip{position:absolute;display:none;background:rgba(13,17,23,.96);color:#e6edf3;
-    padding:13px 16px;border-radius:8px;font-size:11.5px;pointer-events:none;z-index:200;
-    max-width:260px;border:1px solid rgba(88,166,255,.35);
-    box-shadow:0 8px 30px rgba(0,0,0,.5);line-height:1.8}
-  #tooltip .sn{font-weight:700;font-size:13px;margin-bottom:5px;color:#58a6ff}
+        .spinner {
+            width: 44px;
+            height: 44px;
+            border: 4px solid rgba(255, 255, 255, .12);
+            border-top: 4px solid #58a6ff;
+            border-radius: 50%;
+            animation: spin .9s linear infinite
+        }
 
-  #bar{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
-    background:rgba(13,17,23,.85);color:#8b949e;padding:7px 22px;border-radius:20px;
-    font-size:11.5px;z-index:100;white-space:nowrap;border:1px solid rgba(255,255,255,.08)}
+        @keyframes spin {
+            to {
+                transform: rotate(360deg)
+            }
+        }
 
-  @media(max-width:640px){
-    #info{font-size:10px;min-width:150px;padding:10px 12px}
-    #info h3{font-size:12px}
-    .btn{font-size:10px;padding:5px 9px}
-    #legend{font-size:9px}
-    #bar{font-size:10px;padding:5px 14px}
-  }
-</style>
+        #ui {
+            position: absolute;
+            top: 14px;
+            left: 14px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 5px
+        }
+
+        .btn {
+            padding: 7px 13px;
+            background: rgba(13, 17, 23, .88);
+            color: #8b949e;
+            border: 1px solid rgba(255, 255, 255, .1);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11.5px;
+            transition: all .2s;
+            text-align: left;
+            font-family: inherit;
+            white-space: nowrap
+        }
+
+        .btn:hover {
+            background: rgba(22, 27, 34, .95);
+            color: #e6edf3
+        }
+
+        .btn.active {
+            border-color: #58a6ff;
+            color: #58a6ff
+        }
+
+        #info {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            z-index: 100;
+            background: rgba(13, 17, 23, .9);
+            color: #c9d1d9;
+            padding: 14px 16px;
+            border-radius: 8px;
+            font-size: 11.5px;
+            min-width: 190px;
+            border: 1px solid rgba(255, 255, 255, .08);
+            line-height: 1.9
+        }
+
+        #info h3 {
+            margin-bottom: 6px;
+            font-size: 14px;
+            color: #58a6ff;
+            border-bottom: 1px solid rgba(255, 255, 255, .08);
+            padding-bottom: 5px
+        }
+
+        #info hr {
+            border-color: rgba(255, 255, 255, .06);
+            margin: 6px 0
+        }
+
+        #legend {
+            position: absolute;
+            bottom: 56px;
+            right: 14px;
+            z-index: 100;
+            background: rgba(13, 17, 23, .9);
+            color: #8b949e;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 10.5px;
+            border: 1px solid rgba(255, 255, 255, .08)
+        }
+
+        .lg {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            margin: 3px 0
+        }
+
+        .ld {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            flex-shrink: 0
+        }
+
+        #tooltip {
+            position: absolute;
+            display: none;
+            background: rgba(13, 17, 23, .96);
+            color: #e6edf3;
+            padding: 13px 16px;
+            border-radius: 8px;
+            font-size: 11.5px;
+            pointer-events: none;
+            z-index: 200;
+            max-width: 260px;
+            border: 1px solid rgba(88, 166, 255, .35);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, .5);
+            line-height: 1.8
+        }
+
+        #tooltip .sn {
+            font-weight: 700;
+            font-size: 13px;
+            margin-bottom: 5px;
+            color: #58a6ff
+        }
+
+        #bar {
+            position: absolute;
+            bottom: 14px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(13, 17, 23, .85);
+            color: #8b949e;
+            padding: 7px 22px;
+            border-radius: 20px;
+            font-size: 11.5px;
+            z-index: 100;
+            white-space: nowrap;
+            border: 1px solid rgba(255, 255, 255, .08)
+        }
+
+        @media(max-width:640px) {
+            #info {
+                font-size: 10px;
+                min-width: 150px;
+                padding: 10px 12px
+            }
+
+            #info h3 {
+                font-size: 12px
+            }
+
+            .btn {
+                font-size: 10px;
+                padding: 5px 9px
+            }
+
+            #legend {
+                font-size: 9px
+            }
+
+            #bar {
+                font-size: 10px;
+                padding: 5px 14px
+            }
+        }
+    </style>
 </head>
+
 <body>
 
-<div id="loading"><div class="spinner"></div><div>Initializing Hoa Binh Dam…</div></div>
+    <div id="loading">
+        <div class="spinner"></div>
+        <div>Initializing Hydropower Dam…</div>
+    </div>
 
-<div id="ui">
-  <button class="btn active" id="b-sens">📡 Sensors ON</button>
-  <button class="btn" id="b-wire">🔲 Wireframe OFF</button>
-  <button class="btn active" id="b-wave">🌊 Water Anim ON</button>
-  <button class="btn active" id="b-fog">🌫️ Fog ON</button>
-</div>
+    <div id="ui">
+        <button class="btn active" id="b-sens">📡 Sensors ON</button>
+        <button class="btn" id="b-wire">🔲 Wireframe OFF</button>
+        <button class="btn active" id="b-wave">🌊 Water Anim ON</button>
+        <button class="btn active" id="b-fog">🌫️ Fog ON</button>
+    </div>
 
-<div id="info">
-  <h3>🏗️ Hoa Binh Hydropower</h3>
-  <div>📍 20.8°N, 105.3°E — Vietnam</div>
-  <div>📐 Height 128 m · Crest 640 m</div>
-  <div>⚡ 1 920 MW (8 × 240 MW)</div>
-  <div>💧 Reservoir ≈ 9.45 km³</div>
-  <hr>
-  <div id="s-cnt">📡 Sensors: 10 active</div>
-  <div id="s-alert">⚠️ Alerts: 0</div>
-  <div id="s-time">🕐 --:--:--</div>
-</div>
+    <div id="info">
+        <h3>🏗️ Hydropower</h3>
+        <div>📍 20.8°N, 105.3°E — Vietnam</div>
+        <div>📐 Height 128 m · Crest 640 m</div>
+        <div>⚡ 1 920 MW (8 × 240 MW)</div>
+        <div>💧 Reservoir ≈ 9.45 km³</div>
+        <hr>
+        <div id="s-cnt">📡 Sensors: 10 active</div>
+        <div id="s-alert">⚠️ Alerts: 0</div>
+        <div id="s-time">🕐 --:--:--</div>
+    </div>
 
-<div id="legend">
-  <div style="font-weight:600;margin-bottom:3px">Sensor Legend</div>
-  <div class="lg"><div class="ld" style="background:#3fb950"></div>Normal</div>
-  <div class="lg"><div class="ld" style="background:#d29922"></div>Warning</div>
-  <div class="lg"><div class="ld" style="background:#f85149"></div>Critical</div>
-</div>
+    <div id="legend">
+        <div style="font-weight:600;margin-bottom:3px">Sensor Legend</div>
+        <div class="lg">
+            <div class="ld" style="background:#3fb950"></div>Normal
+        </div>
+        <div class="lg">
+            <div class="ld" style="background:#d29922"></div>Warning
+        </div>
+        <div class="lg">
+            <div class="ld" style="background:#f85149"></div>Critical
+        </div>
+    </div>
 
-<div id="tooltip"></div>
-<div id="bar">Hoa Binh Hydropower Plant — Interactive 3D Simulation</div>
+    <div id="tooltip"></div>
+    <div id="bar">Hydropower Plant — Interactive 3D Simulation</div>
 
-<script type="importmap">
+    <script type="importmap">
 {"imports":{
   "three":"https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js",
   "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/"
 }}
 </script>
 
-<script type="module">
-/* ================================================================
-   HOA BINH HYDROPOWER PLANT — THREE.JS 3D SIMULATION
-   ----------------------------------------------------------------
-   Coordinate convention
-     X  →  East  (dam length axis)
-     Y  →  Up
-     Z  →  South / downstream   (+Z = downstream, −Z = upstream)
-   Scale : 1 Three.js unit = 1 metre
-   Dam   : 128 m high, ~640 m arc length, slight curve (R = 800 m)
-   ================================================================ */
+    <script type="module">
+        /* ================================================================
+           HOA BINH HYDROPOWER PLANT — THREE.JS 3D SIMULATION
+           ----------------------------------------------------------------
+           Coordinate convention
+             X  →  East  (dam length axis)
+             Y  →  Up
+             Z  →  South / downstream   (+Z = downstream, −Z = upstream)
+           Scale : 1 Three.js unit = 1 metre
+           Dam   : 128 m high, ~640 m arc length, slight curve (R = 800 m)
+           ================================================================ */
 
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-// ======================== CONFIG ========================
-const C = {
-  dam:{ h:128, R:800, arc:0.8, baseT:90, topT:16, seg:64, hSeg:8 },
-  water:{ resLvl:115, rivLvl:8 }
-};
+        // ======================== CONFIG ========================
+        const C = {
+            dam: { h: 140, R: 1300, arc: 1, baseT: 90, topT: 16, seg: 64, hSeg: 8 },
+            water: { resLvl: 100, rivLvl: 8 }
+        };
+        const TERRAIN_Y_OFFSET = -3;
 
-// ======================== SCENE ========================
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x6bb0e6);
-scene.fog = new THREE.FogExp2(0x7fbde8, 0.00048);
+        function terrainHeightAt(x, z) {
+            const ax = Math.abs(x);
+            let h_ = 0;
+            if (ax > 500) h_ = (ax - 500) * .45;
+            h_ = Math.min(h_, 280);
+            h_ += Math.sin(x * .009 + z * .007) * 14
+                + Math.sin(x * .022 - z * .016) * 7
+                + Math.cos(z * .005) * 6;
+            if (z > 60 && ax < 110) {
+                const f = Math.max(0, 1 - ax / 110);
+                h_ *= 1 - f * .92;
+            }
+            return Math.max(h_, -4);
+        }
 
-// ======================== CAMERA ========================
-const cam = new THREE.PerspectiveCamera(55,innerWidth/innerHeight,1,6000);
-cam.position.set(380,240,460);
+        // ======================== SCENE ========================
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x6bb0e6);
+        scene.fog = new THREE.FogExp2(0x7fbde8, 0.00048);
 
-// ======================== RENDERER ========================
-const R3 = new THREE.WebGLRenderer({antialias:true});
-R3.setSize(innerWidth,innerHeight);
-R3.setPixelRatio(Math.min(devicePixelRatio,2));
-R3.shadowMap.enabled = true;
-R3.shadowMap.type = THREE.PCFSoftShadowMap;
-R3.toneMapping = THREE.ACESFilmicToneMapping;
-R3.toneMappingExposure = 1.15;
-document.body.appendChild(R3.domElement);
+        // ======================== CAMERA ========================
+        const cam = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 1, 6000);
+        cam.position.set(380, 240, 460);
 
-// ======================== CONTROLS ========================
-const ctrl = new OrbitControls(cam,R3.domElement);
-ctrl.enableDamping = true;
-ctrl.dampingFactor = 0.06;
-ctrl.minDistance = 80;
-ctrl.maxDistance = 1800;
-ctrl.maxPolarAngle = Math.PI/2.05;
-ctrl.target.set(0,50,0);
-ctrl.update();
+        // ======================== RENDERER ========================
+        const R3 = new THREE.WebGLRenderer({ antialias: true });
+        R3.setSize(innerWidth, innerHeight);
+        R3.setPixelRatio(Math.min(devicePixelRatio, 2));
+        R3.shadowMap.enabled = true;
+        R3.shadowMap.type = THREE.PCFSoftShadowMap;
+        R3.toneMapping = THREE.ACESFilmicToneMapping;
+        R3.toneMappingExposure = 1.15;
+        document.body.appendChild(R3.domElement);
 
-// ======================== LIGHTS ========================
-scene.add(new THREE.AmbientLight(0x5577aa,0.65));
+        // ======================== CONTROLS ========================
+        const ctrl = new OrbitControls(cam, R3.domElement);
+        ctrl.enableDamping = true;
+        ctrl.dampingFactor = 0.06;
+        ctrl.minDistance = 80;
+        ctrl.maxDistance = 1800;
+        ctrl.maxPolarAngle = Math.PI / 2.05;
+        ctrl.target.set(0, 50, 0);
+        ctrl.update();
 
-const sun = new THREE.DirectionalLight(0xfff4e0,2.3);
-sun.position.set(400,500,250);
-sun.castShadow = true;
-sun.shadow.mapSize.set(2048,2048);
-const sc = sun.shadow.camera;
-sc.near=50;sc.far=2000;sc.left=-600;sc.right=600;sc.top=400;sc.bottom=-100;
-sun.shadow.bias = -0.0004;
-scene.add(sun);
+        // ======================== LIGHTS ========================
+        scene.add(new THREE.AmbientLight(0x5577aa, 0.65));
 
-scene.add(new THREE.HemisphereLight(0x88ccff,0x445522,0.45));
+        const sun = new THREE.DirectionalLight(0xfff4e0, 2.3);
+        sun.position.set(400, 500, 250);
+        sun.castShadow = true;
+        sun.shadow.mapSize.set(2048, 2048);
+        const sc = sun.shadow.camera;
+        sc.near = 50; sc.far = 2000; sc.left = -600; sc.right = 600; sc.top = 400; sc.bottom = -100;
+        sun.shadow.bias = -0.0004;
+        scene.add(sun);
 
-// ======================== MATERIALS ========================
-const M = {
-  conc : new THREE.MeshStandardMaterial({color:0x8a8a8a,roughness:.82,metalness:.04}),
-  concL: new THREE.MeshStandardMaterial({color:0x9a9898,roughness:.78,metalness:.04}),
-  water: new THREE.MeshPhongMaterial({color:0x1a7faf,transparent:true,opacity:.72,
-         specular:0x66aadd,shininess:120,side:THREE.DoubleSide}),
-  watD : new THREE.MeshPhongMaterial({color:0x0d5a7f,transparent:true,opacity:.58,
-         specular:0x4488bb,shininess:80,side:THREE.DoubleSide}),
-  terr : new THREE.MeshLambertMaterial({color:0x3b7d3b,flatShading:true}),
-  gate : new THREE.MeshStandardMaterial({color:0x505050,roughness:.55,metalness:.3}),
-  bldg : new THREE.MeshStandardMaterial({color:0x6e6e6e,roughness:.65,metalness:.1}),
-  road : new THREE.MeshLambertMaterial({color:0x3e3e3e}),
-  white: new THREE.MeshPhongMaterial({color:0x88ccee,transparent:true,opacity:.45,side:THREE.DoubleSide})
-};
-const allMats = Object.values(M);
+        scene.add(new THREE.HemisphereLight(0x88ccff, 0x445522, 0.45));
 
-/* ===========================================================
-   DAM  –  custom BufferGeometry (curved trapezoidal wall)
-   =========================================================== */
-function buildDam(){
-  const g = new THREE.Group(); g.name='dam';
-  const {h,R,arc,baseT,topT,seg,hSeg} = C.dam;
-  const bHW=baseT/2, tHW=topT/2;
+        // ======================== MATERIALS ========================
+        const M = {
+            conc: new THREE.MeshStandardMaterial({ color: 0x8a8a8a, roughness: .82, metalness: .04 }),
+            concL: new THREE.MeshStandardMaterial({ color: 0x9a9898, roughness: .78, metalness: .04 }),
+            water: new THREE.MeshPhongMaterial({
+                color: 0x1a7faf, transparent: true, opacity: .72,
+                specular: 0x66aadd, shininess: 120, side: THREE.DoubleSide
+            }),
+            watD: new THREE.MeshPhongMaterial({
+                color: 0x0d5a7f, transparent: true, opacity: .58,
+                specular: 0x4488bb, shininess: 80, side: THREE.DoubleSide
+            }),
+            terr: new THREE.MeshLambertMaterial({ color: 0x3b7d3b, flatShading: true }),
+            gate: new THREE.MeshStandardMaterial({ color: 0x505050, roughness: .55, metalness: .3 }),
+            bldg: new THREE.MeshStandardMaterial({ color: 0x6e6e6e, roughness: .65, metalness: .1 }),
+            road: new THREE.MeshLambertMaterial({ color: 0x3e3e3e }),
+            white: new THREE.MeshPhongMaterial({ color: 0x88ccee, transparent: true, opacity: .45, side: THREE.DoubleSide })
+        };
+        const allMats = Object.values(M);
 
-  /* --- main body vertices ---------------------------------- */
-  const v=[],idx=[];
-  for(let j=0;j<=hSeg;j++){
-    const y=j/hSeg*h, t=j/hSeg, hw=bHW+(tHW-bHW)*t;
-    for(let i=0;i<=seg;i++){
-      const th=-arc/2+i/seg*arc, s=Math.sin(th), c=Math.cos(th);
-      const cx=R*s, cz=R*(c-1);
-      v.push(cx+hw*s, y, cz+hw*c);   // outer (downstream)
-      v.push(cx-hw*s, y, cz-hw*c);   // inner (upstream)
-    }
-  }
-  const stride=(seg+1)*2;
-  for(let j=0;j<hSeg;j++) for(let i=0;i<seg;i++){
-    const o=j*stride+i*2, ib=o+1, or_=j*stride+(i+1)*2, ir=or_+1;
-    const ot=(j+1)*stride+i*2,it_=ot+1, otr=(j+1)*stride+(i+1)*2,itr=otr+1;
-    idx.push(o,or_,ot, or_,otr,ot);          // downstream
-    idx.push(ib,it_,ir, ir,it_,itr);          // upstream
-    if(j===hSeg-1) idx.push(ot,otr,it_, otr,itr,it_);  // top
-    if(j===0)      idx.push(o,ib,or_, or_,ib,ir);       // bottom
-  }
-  for(let j=0;j<hSeg;j++){                               // end caps
-    let a=j*stride, b=a+1, c=(j+1)*stride, d=c+1;
-    idx.push(a,b,c, b,d,c);
-    a=j*stride+seg*2; b=a+1; c=(j+1)*stride+seg*2; d=c+1;
-    idx.push(a,c,b, b,c,d);
-  }
-  const geo=new THREE.BufferGeometry();
-  geo.setAttribute('position',new THREE.Float32BufferAttribute(v,3));
-  geo.setIndex(idx); geo.computeVertexNormals();
-  const mesh=new THREE.Mesh(geo,M.conc);
-  mesh.castShadow=mesh.receiveShadow=true;
-  g.add(mesh);
+        /* ===========================================================
+           DAM  –  custom BufferGeometry (curved trapezoidal wall)
+           =========================================================== */
+        function buildDam() {
+            const g = new THREE.Group(); g.name = 'dam';
+            const { h, R, arc, baseT, topT, seg, hSeg } = C.dam;
+            const bHW = baseT / 2, tHW = topT / 2;
 
-  /* --- spillway gate piers --------------------------------- */
-  for(let i=0;i<8;i++){
-    const t_=.2+i/7*.6, th=-arc/2+t_*arc;
-    const pier=new THREE.Mesh(new THREE.BoxGeometry(5,20,topT+4),M.gate);
-    pier.position.set(R*Math.sin(th), h+10, R*(Math.cos(th)-1));
-    pier.rotation.y=-th; pier.castShadow=true;
-    g.add(pier);
-  }
+            /* --- main body vertices ---------------------------------- */
+            const v = [], idx = [];
+            for (let j = 0; j <= hSeg; j++) {
+                const y = j / hSeg * h, t = j / hSeg, hw = bHW + (tHW - bHW) * t;
+                for (let i = 0; i <= seg; i++) {
+                    const th = -arc / 2 + i / seg * arc, s = Math.sin(th), c = Math.cos(th);
+                    const cx = R * s, cz = R * (c - 1);
+                    v.push(cx + hw * s, y, cz + hw * c);   // outer (downstream)
+                    v.push(cx - hw * s, y, cz - hw * c);   // inner (upstream)
+                }
+            }
+            const stride = (seg + 1) * 2;
+            for (let j = 0; j < hSeg; j++) for (let i = 0; i < seg; i++) {
+                const o = j * stride + i * 2, ib = o + 1, or_ = j * stride + (i + 1) * 2, ir = or_ + 1;
+                const ot = (j + 1) * stride + i * 2, it_ = ot + 1, otr = (j + 1) * stride + (i + 1) * 2, itr = otr + 1;
+                idx.push(o, or_, ot, or_, otr, ot);          // downstream
+                idx.push(ib, it_, ir, ir, it_, itr);          // upstream
+                if (j === hSeg - 1) idx.push(ot, otr, it_, otr, itr, it_);  // top
+                if (j === 0) idx.push(o, ib, or_, or_, ib, ir);       // bottom
+            }
+            for (let j = 0; j < hSeg; j++) {                               // end caps
+                let a = j * stride, b = a + 1, c = (j + 1) * stride, d = c + 1;
+                idx.push(a, b, c, b, d, c);
+                a = j * stride + seg * 2; b = a + 1; c = (j + 1) * stride + seg * 2; d = c + 1;
+                idx.push(a, c, b, b, c, d);
+            }
+            const geo = new THREE.BufferGeometry();
+            geo.setAttribute('position', new THREE.Float32BufferAttribute(v, 3));
+            geo.setIndex(idx); geo.computeVertexNormals();
+            const mesh = new THREE.Mesh(geo, M.conc);
+            mesh.castShadow = mesh.receiveShadow = true;
+            g.add(mesh);
 
-  /* --- crest road ------------------------------------------ */
-  const rd=new THREE.Mesh(new THREE.PlaneGeometry(620,topT*.7),M.road);
-  rd.rotation.x=-Math.PI/2; rd.position.set(0,h+.3,0);
-  rd.receiveShadow=true; g.add(rd);
+            /* --- spillway gate piers --------------------------------- */
+            for (let i = 0; i < 8; i++) {
+                const t_ = .2 + i / 7 * .6, th = -arc / 2 + t_ * arc;
+                const pier = new THREE.Mesh(new THREE.BoxGeometry(5, 20, topT + 4), M.gate);
+                pier.position.set(R * Math.sin(th), h + 10, R * (Math.cos(th) - 1));
+                pier.rotation.y = -th; pier.castShadow = true;
+                g.add(pier);
+            }
 
-  /* --- powerhouse ------------------------------------------ */
-  const ph=new THREE.Mesh(new THREE.BoxGeometry(210,36,52),M.bldg);
-  ph.position.set(0,18,bHW+32); ph.castShadow=ph.receiveShadow=true; g.add(ph);
-  for(let i=0;i<8;i++){
-    const ol=new THREE.Mesh(new THREE.BoxGeometry(12,13,8),M.gate);
-    ol.position.set(-84+i*24, 10, bHW+60); g.add(ol);
-  }
+            /* --- crest road ------------------------------------------ */
+            const rd = new THREE.Mesh(new THREE.PlaneGeometry(550, topT * .7), M.road);
+            rd.rotation.x = -Math.PI / 2; rd.position.set(0, h + .7, -20);
+            rd.receiveShadow = true; g.add(rd);
 
-  /* --- stepped spillway chute (decorative) ----------------- */
-  for(let s=0;s<14;s++){
-    const sy=18+s*6, tt=sy/h, hw_=bHW+(tHW-bHW)*tt;
-    const step=new THREE.Mesh(new THREE.BoxGeometry(60,3,3),M.concL);
-    step.position.set(0,sy,hw_+1.5); g.add(step);
-  }
+            /* --- powerhouse ------------------------------------------ */
+            const ph = new THREE.Mesh(new THREE.BoxGeometry(210, 36, 52), M.bldg);
+            ph.position.set(0, 18, bHW + 32); ph.castShadow = ph.receiveShadow = true; g.add(ph);
+            for (let i = 0; i < 8; i++) {
+                const ol = new THREE.Mesh(new THREE.BoxGeometry(12, 13, 8), M.gate);
+                ol.position.set(-84 + i * 24, 10, bHW + 60); g.add(ol);
+            }
 
-  return g;
-}
+            /* --- stepped spillway chute (decorative) ----------------- */
+            for (let s = 0; s < 14; s++) {
+                const sy = 18 + s * 6, tt = sy / h, hw_ = bHW + (tHW - bHW) * tt;
+                const step = new THREE.Mesh(new THREE.BoxGeometry(60, 3, 3), M.concL);
+                step.position.set(0, sy, hw_ + 1.5); g.add(step);
+            }
 
-/* ===========================================================
-   TERRAIN
-   =========================================================== */
-function buildTerrain(){
-  const geo=new THREE.PlaneGeometry(3200,3200,100,100);
-  const p=geo.attributes.position;
-  for(let i=0;i<p.count;i++){
-    const wx=p.getX(i), wz=-p.getY(i);
-    const ax=Math.abs(wx);
-    let h_=0;
-    if(ax>80) h_=(ax-80)*.45;
-    h_=Math.min(h_,280);
-    h_+=Math.sin(wx*.009+wz*.007)*14+Math.sin(wx*.022-wz*.016)*7
-       +Math.cos(wz*.005)*6;
-    if(wz>60&&ax<110){const f=Math.max(0,1-ax/110);h_*=1-f*.92;}
-    p.setZ(i,Math.max(h_,-4));
-  }
-  geo.computeVertexNormals();
-  const m=new THREE.Mesh(geo,M.terr);
-  m.rotation.x=-Math.PI/2; m.position.y=-3;
-  m.receiveShadow=true; return m;
-}
+            return g;
+        }
 
-/* ===========================================================
-   WATER
-   =========================================================== */
-let resW, rivW;
-function buildWater(){
-  const g=new THREE.Group();
-  const rg=new THREE.PlaneGeometry(1200,1100,32,32);
-  resW=new THREE.Mesh(rg,M.water);
-  resW.rotation.x=-Math.PI/2;
-  resW.position.set(0,C.water.resLvl,-560);
-  g.add(resW);
+        /* ===========================================================
+           TERRAIN
+           =========================================================== */
+        function buildTerrain() {
+            const geo = new THREE.PlaneGeometry(3200, 3200, 100, 100);
+            const p = geo.attributes.position;
+            for (let i = 0; i < p.count; i++) {
+                const wx = p.getX(i), wz = -p.getY(i);
+                p.setZ(i, terrainHeightAt(wx, wz));
+            }
+            geo.computeVertexNormals();
+            const m = new THREE.Mesh(geo, M.terr);
+            m.rotation.x = -Math.PI / 2; m.position.y = TERRAIN_Y_OFFSET;
+            m.receiveShadow = true; return m;
+        }
 
-  const rr=new THREE.PlaneGeometry(110,1100,10,40);
-  rivW=new THREE.Mesh(rr,M.watD);
-  rivW.rotation.x=-Math.PI/2;
-  rivW.position.set(0,C.water.rivLvl,620);
-  g.add(rivW);
+        /* ===========================================================
+           WATER
+           =========================================================== */
+        let resW, rivW, resFill;
+        function buildWater() {
+            const g = new THREE.Group();
+            const { h, R, arc, baseT, topT } = C.dam;
+            const wl = C.water.resLvl;
 
-  /* spillway mist / foam */
-  const fo=new THREE.Mesh(new THREE.PlaneGeometry(140,70,8,8),M.white);
-  fo.position.set(0,48,C.dam.baseT/2+8); fo.rotation.x=-.2; g.add(fo);
+            // 1. MẶT HỒ CHÍNH (Lùi lại phía sau để không bị lòi qua đập)
+            const rg = new THREE.PlaneGeometry(1200, 1100, 32, 32);
+            resW = new THREE.Mesh(rg, M.water);
+            resW.rotation.x = -Math.PI / 2;
+            resW.position.set(0, wl, -683.5); // Lùi xa hơn một chút (cũ là -560)
+            g.add(resW);
 
-  return g;
-}
+            // 2. LỚP TRÁM (Water Fill) - Khớp với độ cong của đập
+            // Chúng ta tạo một Plane với số phân đoạn bằng với số phân đoạn của đập
+            const fillGeo = new THREE.PlaneGeometry(1, 1, C.dam.seg, 1);
+            const p = fillGeo.attributes.position;
 
-/* ===========================================================
-   TREES  (simple cone + cylinder)
-   =========================================================== */
-function buildTrees(){
-  const g=new THREE.Group();
-  const tM=new THREE.MeshLambertMaterial({color:0x5c3a1e});
-  const lM=new THREE.MeshLambertMaterial({color:0x2a6e2a});
-  const tG=new THREE.CylinderGeometry(.7,1.1,6,5);
-  const lG=new THREE.ConeGeometry(4,10,6);
-  for(let n=0;n<160;n++){
-    const x=(Math.random()-.5)*2400, z=(Math.random()-.5)*2400;
-    if(Math.abs(x)<220&&Math.abs(z)<250) continue;
-    if(z<-40&&Math.abs(x)<550) continue;
-    const ax=Math.abs(x);
-    let th=0; if(ax>80) th=(ax-80)*.45;
-    th+=Math.sin(x*.009+z*.007)*14+Math.sin(x*.022-z*.016)*7;
-    th=Math.max(th,0);
-    if(z>60&&ax<110) th*=.1;
-    const sc_=.6+Math.random()*.9;
-    const trunk=new THREE.Mesh(tG,tM);
-    trunk.position.set(x,th+3*sc_,z); trunk.scale.setScalar(sc_);
-    const leaf=new THREE.Mesh(lG,lM);
-    leaf.position.set(x,th+9*sc_,z); leaf.scale.setScalar(sc_);
-    trunk.castShadow=leaf.castShadow=true;
-    g.add(trunk,leaf);
-  }
-  return g;
-}
+            // Tính toán độ dày đập tại mực nước hiện tại
+            const ratio = wl / h;
+            const hw = C.dam.baseT / 2 + (C.dam.topT / 2 - C.dam.baseT / 2) * ratio;
 
-/* ===========================================================
-   SENSORS
-   =========================================================== */
-const sensors=[], sGrp=new THREE.Group(); sGrp.name='sensors';
+            for (let i = 0; i <= C.dam.seg; i++) {
+                const th = -arc / 2 + (i / C.dam.seg) * arc;
+                const s = Math.sin(th), c = Math.cos(th);
 
-const SDEFS=[
-  {p:[0,132,0],       n:'CREST-C1', z:'Dam Crest — Center'},
-  {p:[-180,132,-8],    n:'CREST-L1', z:'Dam Crest — Left'},
-  {p:[180,132,-8],     n:'CREST-R1', z:'Dam Crest — Right'},
-  {p:[0,68,28],        n:'WALL-C1',  z:'Mid-Wall — Center'},
-  {p:[-120,68,22],     n:'WALL-L1',  z:'Mid-Wall — Left'},
-  {p:[120,68,22],      n:'WALL-R1',  z:'Mid-Wall — Right'},
-  {p:[-42,22,78],      n:'TURB-01',  z:'Turbine Hall — Units 1-4'},
-  {p:[42,22,78],       n:'TURB-02',  z:'Turbine Hall — Units 5-8'},
-  {p:[0,12,260],       n:'DOWN-01',  z:'Downstream — Tailrace'},
-  {p:[0,117,-160],     n:'RESV-01',  z:'Reservoir — Level Gauge'},
-];
+                // Tọa độ khớp với mặt trong (upstream) của đập
+                const vX = R * s - hw * s;
+                const vZ = R * (c - 1) - hw * c;
 
-function buildSensors(){
-  const sGeo=new THREE.SphereGeometry(3.2,16,16);
-  const rGeo=new THREE.RingGeometry(4.2,6,32);
-  SDEFS.forEach((d,idx)=>{
-    const mt=new THREE.MeshPhongMaterial({
-      color:0x3fb950,emissive:0x3fb950,emissiveIntensity:.5,transparent:true,opacity:.9});
-    const mesh=new THREE.Mesh(sGeo,mt);
-    mesh.position.set(...d.p);
+                // Hàng đỉnh phía trước (sát đập)
+                p.setXYZ(i, vX, vZ, 0);
+                // Hàng đỉnh phía sau (nối vào mặt hồ chính)
+                p.setXYZ(i + C.dam.seg + 1, vX, -135, 0);
+            }
+            fillGeo.computeVertexNormals();
 
-    const rMt=new THREE.MeshBasicMaterial({color:0x3fb950,transparent:true,opacity:.32,side:THREE.DoubleSide});
-    const ring=new THREE.Mesh(rGeo,rMt);
-    mesh.add(ring);
+            resFill = new THREE.Mesh(fillGeo, M.water);
+            resFill.rotation.x = Math.PI / 2;
+            resFill.position.y = wl;
+            g.add(resFill);
 
-    const gl=new THREE.PointLight(0x3fb950,.25,35);
-    mesh.add(gl);
+            // 3. DÒNG SÔNG PHÍA DƯỚI (Giữ nguyên)
+            const rr = new THREE.PlaneGeometry(110, 1100, 10, 40);
+            rivW = new THREE.Mesh(rr, M.watD);
+            rivW.rotation.x = -Math.PI / 2;
+            rivW.position.set(0, C.water.rivLvl, 620);
+            g.add(rivW);
 
-    sensors.push({mesh,mt,ring,rMt,gl,
-      data:{name:d.n,zone:d.z,status:'normal',
-        temp:+(20+Math.random()*10).toFixed(1),
-        pres:+(90+Math.random()*20).toFixed(1),
-        vib:+(Math.random()*3).toFixed(2),
-        wl:d.n.startsWith('RESV')?+(113+Math.random()*4).toFixed(1):null,
-        fl:d.n.startsWith('TURB')?+(200+Math.random()*100).toFixed(0):null},
-      ph:Math.random()*Math.PI*2});
-    sGrp.add(mesh);
-  });
-  scene.add(sGrp);
-}
+            // Bọt nước chân đập (Giữ nguyên)
+            const fo = new THREE.Mesh(new THREE.PlaneGeometry(140, 70, 8, 8), M.white);
+            fo.position.set(0, 48, C.dam.baseT / 2 + 8);
+            fo.rotation.x = -0.2;
+            g.add(fo);
 
-const SCOL={normal:0x3fb950,warning:0xd29922,critical:0xf85149};
+            return g;
+        }
 
-function updateSensors(){
-  let alerts=0;
-  sensors.forEach(s=>{
-    const r=Math.random();
-    s.data.status=r<.62?'normal':r<.87?'warning':'critical';
-    if(s.data.status!=='normal') alerts++;
-    s.data.temp=+(17+Math.random()*15).toFixed(1);
-    s.data.pres=+(82+Math.random()*32).toFixed(1);
-    s.data.vib=+(Math.random()*9).toFixed(2);
-    if(s.data.wl!==null) s.data.wl=+(108+Math.random()*8).toFixed(1);
-    if(s.data.fl!==null) s.data.fl=+(170+Math.random()*130).toFixed(0);
+        /* ===========================================================
+           TREES  (simple cone + cylinder)
+           =========================================================== */
+        function buildTrees() {
+            const g = new THREE.Group();
+            const tM = new THREE.MeshLambertMaterial({ color: 0x5c3a1e });
+            const lM = new THREE.MeshLambertMaterial({ color: 0x2a6e2a });
+            const tG = new THREE.CylinderGeometry(.7, 1.1, 6, 5);
+            const lG = new THREE.ConeGeometry(4, 10, 6);
+            function addTree(x, z) {
+                if (Math.abs(x) < 220 && Math.abs(z) < 250) return;
+                if (Math.abs(x) < 95 && z > -40 && z < 1200) return;
+                const groundY = terrainHeightAt(x, z) + TERRAIN_Y_OFFSET;
+                const sc_ = .75 + Math.random() * 1.0;
+                const trunk = new THREE.Mesh(tG, tM);
+                trunk.position.set(x, groundY + 3 * sc_, z); trunk.scale.setScalar(sc_);
+                const leaf = new THREE.Mesh(lG, lM);
+                leaf.position.set(x, groundY + 9 * sc_, z); leaf.scale.setScalar(sc_);
+                trunk.castShadow = leaf.castShadow = true;
+                g.add(trunk, leaf);
+            }
 
-    const c=SCOL[s.data.status];
-    s.mt.color.setHex(c); s.mt.emissive.setHex(c);
-    s.rMt.color.setHex(c); s.gl.color.setHex(c);
-  });
-  document.getElementById('s-alert').textContent='⚠️ Alerts: '+alerts;
-}
+            // Lớp cây nền toàn khu, bắt đầu từ khu vực đập trở về hạ lưu.
+            for (let n = 0; n < 220; n++) {
+                const x = (Math.random() - .5) * 2400;
+                const z = -120 + Math.random() * 1320;
+                addTree(x, z);
+            }
 
-/* ===========================================================
-   ASSEMBLE SCENE
-   =========================================================== */
-scene.add(buildDam());
-scene.add(buildTerrain());
-scene.add(buildWater());
-scene.add(buildTrees());
-buildSensors();
+            // Tăng mật độ rõ hơn ở hai bên sườn núi trái/phải.
+            for (let n = 0; n < 180; n++) {
+                const side = Math.random() < .5 ? -1 : 1;
+                const x = side * (520 + Math.random() * 740);
+                const z = -80 + Math.random() * 1240;
+                addTree(x, z);
+            }
+            return g;
+        }
 
-/* sky sphere */
-scene.add(new THREE.Mesh(
-  new THREE.SphereGeometry(2800,32,16),
-  new THREE.MeshBasicMaterial({color:0x8ec8f8,side:THREE.BackSide})));
+        /* ===========================================================
+           SENSORS
+           =========================================================== */
+        const sensors = [], sGrp = new THREE.Group(); sGrp.name = 'sensors';
 
-/* ===========================================================
-   RAYCASTING  –  sensor click → tooltip
-   =========================================================== */
-const rc=new THREE.Raycaster(), mv=new THREE.Vector2();
-const tip=document.getElementById('tooltip');
+        const SDEFS = [
+            { p: [0, 132, 0], n: 'CREST-C1', z: 'Dam Crest — Center' },
+            { p: [-180, 132, -8], n: 'CREST-L1', z: 'Dam Crest — Left' },
+            { p: [180, 132, -8], n: 'CREST-R1', z: 'Dam Crest — Right' },
+            { p: [0, 68, 28], n: 'WALL-C1', z: 'Mid-Wall — Center' },
+            { p: [-120, 68, 22], n: 'WALL-L1', z: 'Mid-Wall — Left' },
+            { p: [120, 68, 22], n: 'WALL-R1', z: 'Mid-Wall — Right' },
+            { p: [-42, 22, 78], n: 'TURB-01', z: 'Turbine Hall — Units 1-4' },
+            { p: [42, 22, 78], n: 'TURB-02', z: 'Turbine Hall — Units 5-8' },
+            { p: [0, 12, 260], n: 'DOWN-01', z: 'Downstream — Tailrace' },
+            { p: [0, 117, -160], n: 'RESV-01', z: 'Reservoir — Level Gauge' },
+        ];
 
-function sensorMeshes(){ return sensors.map(s=>s.mesh); }
+        function buildSensors() {
+            const sGeo = new THREE.SphereGeometry(3.2, 16, 16);
+            const rGeo = new THREE.RingGeometry(4.2, 6, 32);
+            SDEFS.forEach((d, idx) => {
+                const mt = new THREE.MeshPhongMaterial({
+                    color: 0x3fb950, emissive: 0x3fb950, emissiveIntensity: .5, transparent: true, opacity: .9
+                });
+                const mesh = new THREE.Mesh(sGeo, mt);
+                mesh.position.set(...d.p);
 
-R3.domElement.addEventListener('click',e=>{
-  mv.x=e.clientX/innerWidth*2-1;
-  mv.y=-(e.clientY/innerHeight)*2+1;
-  rc.setFromCamera(mv,cam);
-  const h=rc.intersectObjects(sensorMeshes());
-  if(h.length){
-    const s=sensors.find(s=>s.mesh===h[0].object);
-    if(s) showTip(e.clientX,e.clientY,s.data);
-  } else tip.style.display='none';
-});
+                const rMt = new THREE.MeshBasicMaterial({ color: 0x3fb950, transparent: true, opacity: .32, side: THREE.DoubleSide });
+                const ring = new THREE.Mesh(rGeo, rMt);
+                mesh.add(ring);
 
-let lastRC=0;
-R3.domElement.addEventListener('mousemove',e=>{
-  if(tip.style.display==='block'){
-    tip.style.left=Math.min(e.clientX+14,innerWidth-270)+'px';
-    tip.style.top =Math.min(e.clientY+14,innerHeight-220)+'px';
-  }
-  const now=performance.now();
-  if(now-lastRC>60){
-    mv.x=e.clientX/innerWidth*2-1;
-    mv.y=-(e.clientY/innerHeight)*2+1;
-    rc.setFromCamera(mv,cam);
-    R3.domElement.style.cursor=rc.intersectObjects(sensorMeshes()).length?'pointer':'default';
-    lastRC=now;
-  }
-});
+                const gl = new THREE.PointLight(0x3fb950, .25, 35);
+                mesh.add(gl);
 
-const TC={normal:'#3fb950',warning:'#d29922',critical:'#f85149'};
-const TE={normal:'✅',warning:'⚠️',critical:'🔴'};
+                sensors.push({
+                    mesh, mt, ring, rMt, gl,
+                    data: {
+                        name: d.n, zone: d.z, status: 'normal',
+                        temp: +(20 + Math.random() * 10).toFixed(1),
+                        pres: +(90 + Math.random() * 20).toFixed(1),
+                        vib: +(Math.random() * 3).toFixed(2),
+                        wl: d.n.startsWith('RESV') ? +(113 + Math.random() * 4).toFixed(1) : null,
+                        fl: d.n.startsWith('TURB') ? +(200 + Math.random() * 100).toFixed(0) : null
+                    },
+                    ph: Math.random() * Math.PI * 2
+                });
+                sGrp.add(mesh);
+            });
+            scene.add(sGrp);
+        }
 
-function showTip(x,y,d){
-  let html=`<div class="sn">${TE[d.status]} ${d.name}</div>
+        const SCOL = { normal: 0x3fb950, warning: 0xd29922, critical: 0xf85149 };
+
+        function updateSensors() {
+            let alerts = 0;
+            sensors.forEach(s => {
+                const r = Math.random();
+                s.data.status = r < .62 ? 'normal' : r < .87 ? 'warning' : 'critical';
+                if (s.data.status !== 'normal') alerts++;
+                s.data.temp = +(17 + Math.random() * 15).toFixed(1);
+                s.data.pres = +(82 + Math.random() * 32).toFixed(1);
+                s.data.vib = +(Math.random() * 9).toFixed(2);
+                if (s.data.wl !== null) s.data.wl = +(108 + Math.random() * 8).toFixed(1);
+                if (s.data.fl !== null) s.data.fl = +(170 + Math.random() * 130).toFixed(0);
+
+                const c = SCOL[s.data.status];
+                s.mt.color.setHex(c); s.mt.emissive.setHex(c);
+                s.rMt.color.setHex(c); s.gl.color.setHex(c);
+            });
+            document.getElementById('s-alert').textContent = '⚠️ Alerts: ' + alerts;
+        }
+
+        /* ===========================================================
+           ASSEMBLE SCENE
+           =========================================================== */
+        scene.add(buildDam());
+        scene.add(buildTerrain());
+        scene.add(buildWater());
+        scene.add(buildTrees());
+        buildSensors();
+
+        /* sky sphere */
+        scene.add(new THREE.Mesh(
+            new THREE.SphereGeometry(2800, 32, 16),
+            new THREE.MeshBasicMaterial({ color: 0x8ec8f8, side: THREE.BackSide })));
+
+        /* ===========================================================
+           RAYCASTING  –  sensor click → tooltip
+           =========================================================== */
+        const rc = new THREE.Raycaster(), mv = new THREE.Vector2();
+        const tip = document.getElementById('tooltip');
+
+        function sensorMeshes() { return sensors.map(s => s.mesh); }
+
+        R3.domElement.addEventListener('click', e => {
+            mv.x = e.clientX / innerWidth * 2 - 1;
+            mv.y = -(e.clientY / innerHeight) * 2 + 1;
+            rc.setFromCamera(mv, cam);
+            const h = rc.intersectObjects(sensorMeshes());
+            if (h.length) {
+                const s = sensors.find(s => s.mesh === h[0].object);
+                if (s) showTip(e.clientX, e.clientY, s.data);
+            } else tip.style.display = 'none';
+        });
+
+        let lastRC = 0;
+        R3.domElement.addEventListener('mousemove', e => {
+            if (tip.style.display === 'block') {
+                tip.style.left = Math.min(e.clientX + 14, innerWidth - 270) + 'px';
+                tip.style.top = Math.min(e.clientY + 14, innerHeight - 220) + 'px';
+            }
+            const now = performance.now();
+            if (now - lastRC > 60) {
+                mv.x = e.clientX / innerWidth * 2 - 1;
+                mv.y = -(e.clientY / innerHeight) * 2 + 1;
+                rc.setFromCamera(mv, cam);
+                R3.domElement.style.cursor = rc.intersectObjects(sensorMeshes()).length ? 'pointer' : 'default';
+                lastRC = now;
+            }
+        });
+
+        const TC = { normal: '#3fb950', warning: '#d29922', critical: '#f85149' };
+        const TE = { normal: '✅', warning: '⚠️', critical: '🔴' };
+
+        function showTip(x, y, d) {
+            let html = `<div class="sn">${TE[d.status]} ${d.name}</div>
     <div>📍 ${d.zone}</div>
     <div>Status: <b style="color:${TC[d.status]}">${d.status.toUpperCase()}</b></div>
     <div>🌡️ Temp: ${d.temp} °C</div>
     <div>📊 Pressure: ${d.pres} kPa</div>
     <div>📳 Vibration: ${d.vib} mm/s</div>`;
-  if(d.wl!==null) html+=`<div>💧 Water Level: ${d.wl} m</div>`;
-  if(d.fl!==null) html+=`<div>🌀 Flow: ${d.fl} m³/s</div>`;
-  tip.innerHTML=html;
-  tip.style.left=Math.min(x+14,innerWidth-270)+'px';
-  tip.style.top =Math.min(y+14,innerHeight-220)+'px';
-  tip.style.display='block';
-}
+            if (d.wl !== null) html += `<div>💧 Water Level: ${d.wl} m</div>`;
+            if (d.fl !== null) html += `<div>🌀 Flow: ${d.fl} m³/s</div>`;
+            tip.innerHTML = html;
+            tip.style.left = Math.min(x + 14, innerWidth - 270) + 'px';
+            tip.style.top = Math.min(y + 14, innerHeight - 220) + 'px';
+            tip.style.display = 'block';
+        }
 
-/* ===========================================================
-   UI BUTTONS
-   =========================================================== */
-let showS=true, wireF=false, animW=true, fogOn=true;
+        /* ===========================================================
+           UI BUTTONS
+           =========================================================== */
+        let showS = true, wireF = false, animW = true, fogOn = true;
 
-document.getElementById('b-sens').onclick=function(){
-  showS=!showS; sGrp.visible=showS;
-  this.textContent='📡 Sensors '+(showS?'ON':'OFF');
-  this.classList.toggle('active',showS);
-  if(!showS) tip.style.display='none';
-};
-document.getElementById('b-wire').onclick=function(){
-  wireF=!wireF;
-  allMats.forEach(m=>{m.wireframe=wireF;});
-  this.textContent='🔲 Wireframe '+(wireF?'ON':'OFF');
-  this.classList.toggle('active',wireF);
-};
-document.getElementById('b-wave').onclick=function(){
-  animW=!animW;
-  this.textContent='🌊 Water Anim '+(animW?'ON':'OFF');
-  this.classList.toggle('active',animW);
-};
-document.getElementById('b-fog').onclick=function(){
-  fogOn=!fogOn;
-  scene.fog=fogOn?new THREE.FogExp2(0x7fbde8,.00048):null;
-  this.textContent='🌫️ Fog '+(fogOn?'ON':'OFF');
-  this.classList.toggle('active',fogOn);
-};
+        document.getElementById('b-sens').onclick = function () {
+            showS = !showS; sGrp.visible = showS;
+            this.textContent = '📡 Sensors ' + (showS ? 'ON' : 'OFF');
+            this.classList.toggle('active', showS);
+            if (!showS) tip.style.display = 'none';
+        };
+        document.getElementById('b-wire').onclick = function () {
+            wireF = !wireF;
+            allMats.forEach(m => { m.wireframe = wireF; });
+            this.textContent = '🔲 Wireframe ' + (wireF ? 'ON' : 'OFF');
+            this.classList.toggle('active', wireF);
+        };
+        document.getElementById('b-wave').onclick = function () {
+            animW = !animW;
+            this.textContent = '🌊 Water Anim ' + (animW ? 'ON' : 'OFF');
+            this.classList.toggle('active', animW);
+        };
+        document.getElementById('b-fog').onclick = function () {
+            fogOn = !fogOn;
+            scene.fog = fogOn ? new THREE.FogExp2(0x7fbde8, .00048) : null;
+            this.textContent = '🌫️ Fog ' + (fogOn ? 'ON' : 'OFF');
+            this.classList.toggle('active', fogOn);
+        };
 
-/* ===========================================================
-   PERIODIC UPDATES
-   =========================================================== */
-setInterval(updateSensors,2000); updateSensors();
-setInterval(()=>{
-  document.getElementById('s-time').textContent='🕐 '+new Date().toLocaleTimeString();
-},1000);
+        /* ===========================================================
+           PERIODIC UPDATES
+           =========================================================== */
+        setInterval(updateSensors, 2000); updateSensors();
+        setInterval(() => {
+            document.getElementById('s-time').textContent = '🕐 ' + new Date().toLocaleTimeString();
+        }, 1000);
 
-/* ===========================================================
-   ANIMATION LOOP
-   =========================================================== */
-const clk=new THREE.Clock();
+        /* ===========================================================
+           ANIMATION LOOP
+           =========================================================== */
+        const clk = new THREE.Clock();
 
-function animate(){
-  requestAnimationFrame(animate);
-  const t=clk.getElapsedTime();
-  ctrl.update();
+        function animate() {
+            requestAnimationFrame(animate);
+            const t = clk.getElapsedTime();
+            ctrl.update();
 
-  /* water waves */
-  if(animW){
-    if(resW){
-      const rp=resW.geometry.attributes.position;
-      for(let i=0;i<rp.count;i++){
-        const x=rp.getX(i),y=rp.getY(i);
-        rp.setZ(i,
-          Math.sin(x*.028+t*.65)*.7+
-          Math.cos(y*.022+t*.45)*.55+
-          Math.sin((x+y)*.018+t*.85)*.35);
-      }
-      rp.needsUpdate=true;
-    }
-    if(rivW){
-      const rp=rivW.geometry.attributes.position;
-      for(let i=0;i<rp.count;i++){
-        const x=rp.getX(i),y=rp.getY(i);
-        rp.setZ(i,
-          Math.sin(x*.055+t*2.2)*.45+
-          Math.sin(y*.013+t*1.6)*.9);
-      }
-      rp.needsUpdate=true;
-    }
-  }
+            /* water waves */
+            if (animW) {
+                if (resW) {
+                    const rp = resW.geometry.attributes.position;
+                    for (let i = 0; i < rp.count; i++) {
+                        const x = rp.getX(i), y = rp.getY(i);
+                        rp.setZ(i,
+                            Math.sin(x * .028 + t * .65) * .7 +
+                            Math.cos(y * .022 + t * .45) * .55 +
+                            Math.sin((x + y) * .018 + t * .85) * .35);
+                    }
+                    rp.needsUpdate = true;
+                }
+                if (rivW) {
+                    const rp = rivW.geometry.attributes.position;
+                    for (let i = 0; i < rp.count; i++) {
+                        const x = rp.getX(i), y = rp.getY(i);
+                        rp.setZ(i,
+                            Math.sin(x * 0.12 + t * 4.5) +   // sóng ngang mạnh
+                            Math.sin(y * 0.05 + t * 3.2) * 2.0 +   // dòng chảy chính
+                            Math.cos((x + y) * 0.03 + t * 5.5) * 0.8
+                        )
+                    }
+                    rp.needsUpdate = true;
+                }
+            }
 
-  /* sensor pulse */
-  if(showS) sensors.forEach(s=>{
-    const sc=.82+Math.sin(t*3.2+s.ph)*.28;
-    s.mesh.scale.setScalar(sc);
-    s.mt.emissiveIntensity=.3+Math.sin(t*4+s.ph)*.38;
-    s.ring.lookAt(cam.position);
-    s.rMt.opacity=.18+Math.sin(t*2+s.ph)*.26;
-    s.gl.intensity=.12+Math.sin(t*3+s.ph)*.15;
-  });
+            /* sensor pulse */
+            if (showS) sensors.forEach(s => {
+                const sc = .82 + Math.sin(t * 3.2 + s.ph) * .28;
+                s.mesh.scale.setScalar(sc);
+                s.mt.emissiveIntensity = .3 + Math.sin(t * 4 + s.ph) * .38;
+                s.ring.lookAt(cam.position);
+                s.rMt.opacity = .18 + Math.sin(t * 2 + s.ph) * .26;
+                s.gl.intensity = .12 + Math.sin(t * 3 + s.ph) * .15;
+            });
 
-  R3.render(scene,cam);
-}
+            R3.render(scene, cam);
+        }
 
-/* ===========================================================
-   RESIZE
-   =========================================================== */
-addEventListener('resize',()=>{
-  cam.aspect=innerWidth/innerHeight;
-  cam.updateProjectionMatrix();
-  R3.setSize(innerWidth,innerHeight);
-});
+        /* ===========================================================
+           RESIZE
+           =========================================================== */
+        addEventListener('resize', () => {
+            cam.aspect = innerWidth / innerHeight;
+            cam.updateProjectionMatrix();
+            R3.setSize(innerWidth, innerHeight);
+        });
 
-/* ===========================================================
-   START
-   =========================================================== */
-const ld=document.getElementById('loading');
-ld.classList.add('hidden');
-setTimeout(()=>ld.style.display='none',700);
+        /* ===========================================================
+           START
+           =========================================================== */
+        const ld = document.getElementById('loading');
+        ld.classList.add('hidden');
+        setTimeout(() => ld.style.display = 'none', 700);
 
-animate();
+        animate();
 
-console.log('%c Hoa Binh Dam 3D ','background:#58a6ff;color:#0d1117;font-weight:bold;padding:4px 8px;border-radius:4px',
-  '\n• Scale: 1 unit = 1 m\n• Dam: 128 m × 640 m arc\n• Sensors:',sensors.length,'nodes');
-</script>
+        console.log('%c Hydropower 3D ', 'background:#58a6ff;color:#0d1117;font-weight:bold;padding:4px 8px;border-radius:4px',
+            '\n• Scale: 1 unit = 1 m\n• Dam: 128 m × 640 m arc\n• Sensors:', sensors.length, 'nodes');
+    </script>
 </body>
+
 </html>
