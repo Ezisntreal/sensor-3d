@@ -224,30 +224,32 @@
         <button class="btn" id="b-wire">🔲 Wireframe OFF</button>
         <button class="btn active" id="b-wave">🌊 Water Anim ON</button>
         <button class="btn active" id="b-fog">🌫️ Fog ON</button>
+        <button class="btn" id="b-lang">🌐 Tiếng Việt</button>
     </div>
 
     <div id="info">
-        <h3>🏗️ Hydropower</h3>
-        <div>📍 20.8°N, 105.3°E — Vietnam</div>
-        <div>📐 Height 128 m · Crest 640 m</div>
-        <div>⚡ 1 920 MW (8 × 240 MW)</div>
-        <div>💧 Reservoir ≈ 9.45 km³</div>
+        <h3 id="info-title">🏗️ Dữ liệu hiện tại</h3>
+        <div id="i-dam">Cao trình đập: 160 m</div>
+        <div id="i-res">Mực nước hồ: 112.3 m</div>
+        <div id="i-cap">Dung tích hồ: 34.6 triệu m³</div>
+        <div id="i-down">Mực nước hạ lưu: 8 m</div>
+        <div id="i-rain">Lượng mưa hiện tại: 0 mm</div>
+        <div id="i-gate">Độ mở cống: 23 cm</div>
         <hr>
         <div id="s-cnt">📡 Sensors: 10 active</div>
-        <div id="s-alert">⚠️ Alerts: 0</div>
-        <div id="s-time">🕐 --:--:--</div>
+        <div id="s-warn">⚠️ Cảnh báo: 1 cảm biến</div>
     </div>
 
     <div id="legend">
-        <div style="font-weight:600;margin-bottom:3px">Sensor Legend</div>
+        <div id="lg-title" style="font-weight:600;margin-bottom:3px">Sensor Legend - Status</div>
         <div class="lg">
-            <div class="ld" style="background:#3fb950"></div>Normal
+            <div class="ld" style="background:#3fb950"></div><span id="lg-normal">Normal - Normal</span>
         </div>
         <div class="lg">
-            <div class="ld" style="background:#d29922"></div>Warning
+            <div class="ld" style="background:#d29922"></div><span id="lg-disconnect">Disconnect - Disconnected</span>
         </div>
         <div class="lg">
-            <div class="ld" style="background:#f85149"></div>Critical
+            <div class="ld" style="background:#f85149"></div><span id="lg-critical">Critical - Critical</span>
         </div>
     </div>
 
@@ -278,8 +280,8 @@
 
         // ======================== CONFIG ========================
         const C = {
-            dam: { h: 140, R: 1300, arc: 1, baseT: 90, topT: 16, seg: 64, hSeg: 8 },
-            water: { resLvl: 100, rivLvl: 8 }
+            dam: { h: 160, R: 1300, arc: 1, baseT: 90, topT: 16, seg: 64, hSeg: 8 },
+            water: { resLvl: 112.3, rivLvl: 8 }
         };
         const TERRAIN_Y_OFFSET = -3;
 
@@ -453,7 +455,7 @@
         /* ===========================================================
            WATER
            =========================================================== */
-        let resW, rivW, resFill;
+        let resW, rivW, resFill, rivLowW;
         function buildWater() {
             const g = new THREE.Group();
             const { h, R, arc, baseT, topT } = C.dam;
@@ -502,12 +504,105 @@
             rivW.position.set(0, C.water.rivLvl, 620);
             g.add(rivW);
 
+            // Lớp nước thấp hơn phía dưới để tạo cảm giác độ cao chênh lệch.
+            const lowMat = M.watD.clone();
+            lowMat.opacity = .36;
+            const lowR = new THREE.PlaneGeometry(240, 1280, 14, 46);
+            rivLowW = new THREE.Mesh(lowR, lowMat);
+            rivLowW.rotation.x = -Math.PI / 2;
+            rivLowW.position.set(0, -18, 640);
+            g.add(rivLowW);
+
             // Bọt nước chân đập (Giữ nguyên)
             const fo = new THREE.Mesh(new THREE.PlaneGeometry(140, 70, 8, 8), M.white);
             fo.position.set(0, 48, C.dam.baseT / 2 + 8);
             fo.rotation.x = -0.2;
             g.add(fo);
 
+            return g;
+        }
+
+        function makeLevelLabel(text) {
+            const cv = document.createElement('canvas');
+            cv.width = 256;
+            cv.height = 96;
+            const ctx = cv.getContext('2d');
+
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, cv.width, cv.height);
+            ctx.strokeStyle = '#111111';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(2, 2, cv.width - 4, cv.height - 4);
+
+            ctx.font = 'bold 42px Segoe UI';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#000000';
+            ctx.fillText(text, cv.width / 2, cv.height / 2);
+
+            const tex = new THREE.CanvasTexture(cv);
+            tex.minFilter = THREE.LinearFilter;
+            const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false });
+            const sp = new THREE.Sprite(mat);
+            sp.scale.set(44, 16.5, 1);
+            return sp;
+        }
+
+        function buildWaterGauge() {
+            const g = new THREE.Group();
+            const maxLevel = C.dam.h;
+            const step = 10;
+            const wl = C.water.resLvl;
+
+            const x = -220;
+            const z = -310;
+
+            const frame = new THREE.Mesh(
+                new THREE.BoxGeometry(4.8, maxLevel + 4, 1.4),
+                new THREE.MeshStandardMaterial({ color: 0x1f2429, roughness: .5, metalness: .28 })
+            );
+            frame.position.set(x, maxLevel / 2, z);
+            frame.castShadow = true;
+            frame.receiveShadow = true;
+            g.add(frame);
+
+            for (let y = 0; y < maxLevel; y += step) {
+                const isRed = (y / step) % 2 === 0;
+                const seg = new THREE.Mesh(
+                    new THREE.BoxGeometry(3.6, step, 1.2),
+                    new THREE.MeshLambertMaterial({ color: isRed ? 0xcd2b31 : 0xf5f5f5 })
+                );
+                seg.position.set(x, y + step / 2, z + 0.02);
+                seg.castShadow = true;
+                g.add(seg);
+
+                const tick = new THREE.Mesh(
+                    new THREE.BoxGeometry(5.4, .58, .58),
+                    new THREE.MeshLambertMaterial({ color: 0xe9ecef })
+                );
+                tick.position.set(x + 4.7, y, z + 0.9);
+                g.add(tick);
+            }
+
+            const topTick = new THREE.Mesh(
+                new THREE.BoxGeometry(5.4, .58, .58),
+                new THREE.MeshLambertMaterial({ color: 0xe9ecef })
+            );
+            topTick.position.set(x + 4.7, maxLevel, z + 0.9);
+            g.add(topTick);
+
+            const wlMarker = new THREE.Mesh(
+                new THREE.BoxGeometry(9.8, .9, .9),
+                new THREE.MeshBasicMaterial({ color: 0x54d2ff })
+            );
+            wlMarker.position.set(x + 7.5, wl, z + 1.2);
+            g.add(wlMarker);
+
+            const lbl = makeLevelLabel(`${wl.toFixed(1)}m`);
+            lbl.position.set(x + 36, wl + 30, z + 0.5);
+            g.add(lbl);
+
+            g.position.y = TERRAIN_Y_OFFSET;
             return g;
         }
 
@@ -534,14 +629,14 @@
             }
 
             // Lớp cây nền toàn khu, bắt đầu từ khu vực đập trở về hạ lưu.
-            for (let n = 0; n < 220; n++) {
+            for (let n = 0; n < 40; n++) {
                 const x = (Math.random() - .5) * 2400;
                 const z = -120 + Math.random() * 1320;
                 addTree(x, z);
             }
 
             // Tăng mật độ rõ hơn ở hai bên sườn núi trái/phải.
-            for (let n = 0; n < 180; n++) {
+            for (let n = 0; n < 120; n++) {
                 const side = Math.random() < .5 ? -1 : 1;
                 const x = side * (520 + Math.random() * 740);
                 const z = -80 + Math.random() * 1240;
@@ -556,16 +651,11 @@
         const sensors = [], sGrp = new THREE.Group(); sGrp.name = 'sensors';
 
         const SDEFS = [
-            { p: [0, 132, 0], n: 'CREST-C1', z: 'Dam Crest — Center' },
-            { p: [-180, 132, -8], n: 'CREST-L1', z: 'Dam Crest — Left' },
-            { p: [180, 132, -8], n: 'CREST-R1', z: 'Dam Crest — Right' },
-            { p: [0, 68, 28], n: 'WALL-C1', z: 'Mid-Wall — Center' },
-            { p: [-120, 68, 22], n: 'WALL-L1', z: 'Mid-Wall — Left' },
-            { p: [120, 68, 22], n: 'WALL-R1', z: 'Mid-Wall — Right' },
-            { p: [-42, 22, 78], n: 'TURB-01', z: 'Turbine Hall — Units 1-4' },
-            { p: [42, 22, 78], n: 'TURB-02', z: 'Turbine Hall — Units 5-8' },
-            { p: [0, 12, 260], n: 'DOWN-01', z: 'Downstream — Tailrace' },
-            { p: [0, 117, -160], n: 'RESV-01', z: 'Reservoir — Level Gauge' },
+            { p: [0, 68, 28], n: 'WC1', z: 'Mid-Wall — Center', status: 'normal' },
+            { p: [-120, 68, 22], n: 'WL1', z: 'Mid-Wall — Left', status: 'disconnected' },
+            { p: [120, 68, 22], n: 'WR1', z: 'Mid-Wall — Right', status: 'warning' },
+            { p: [0, 12, 260], n: 'DOWN-01', z: 'Downstream — Tailrace', status: 'normal' },
+            { p: [0, 117, -160], n: 'WAU', z: 'Mực nước TL', status: 'normal' },
         ];
 
         function buildSensors() {
@@ -588,7 +678,7 @@
                 sensors.push({
                     mesh, mt, ring, rMt, gl,
                     data: {
-                        name: d.n, zone: d.z, status: 'normal',
+                        name: d.n, zone: d.z, status: d.status || 'normal',
                         temp: +(20 + Math.random() * 10).toFixed(1),
                         pres: +(90 + Math.random() * 20).toFixed(1),
                         vib: +(Math.random() * 3).toFixed(2),
@@ -602,25 +692,20 @@
             scene.add(sGrp);
         }
 
-        const SCOL = { normal: 0x3fb950, warning: 0xd29922, critical: 0xf85149 };
+        const SCOL = { normal: 0x3fb950, disconnected: 0xd29922, warning: 0xf85149};
 
         function updateSensors() {
-            let alerts = 0;
             sensors.forEach(s => {
-                const r = Math.random();
-                s.data.status = r < .62 ? 'normal' : r < .87 ? 'warning' : 'critical';
-                if (s.data.status !== 'normal') alerts++;
                 s.data.temp = +(17 + Math.random() * 15).toFixed(1);
                 s.data.pres = +(82 + Math.random() * 32).toFixed(1);
                 s.data.vib = +(Math.random() * 9).toFixed(2);
                 if (s.data.wl !== null) s.data.wl = +(108 + Math.random() * 8).toFixed(1);
                 if (s.data.fl !== null) s.data.fl = +(170 + Math.random() * 130).toFixed(0);
 
-                const c = SCOL[s.data.status];
+                const c = SCOL[s.data.status] || SCOL.normal;
                 s.mt.color.setHex(c); s.mt.emissive.setHex(c);
                 s.rMt.color.setHex(c); s.gl.color.setHex(c);
             });
-            document.getElementById('s-alert').textContent = '⚠️ Alerts: ' + alerts;
         }
 
         /* ===========================================================
@@ -629,6 +714,7 @@
         scene.add(buildDam());
         scene.add(buildTerrain());
         scene.add(buildWater());
+        scene.add(buildWaterGauge());
         scene.add(buildTrees());
         buildSensors();
 
@@ -672,18 +758,21 @@
             }
         });
 
-        const TC = { normal: '#3fb950', warning: '#d29922', critical: '#f85149' };
-        const TE = { normal: '✅', warning: '⚠️', critical: '🔴' };
+        const TC = { normal: '#3fb950', disconnected: '#d29922', warning: '#f85149' };
 
         function showTip(x, y, d) {
-            let html = `<div class="sn">${TE[d.status]} ${d.name}</div>
-    <div>📍 ${d.zone}</div>
+            const isVi = uiLang === 'vi';
+            const html = isVi
+                ? `<div class="sn">${d.name}</div>
+    <div>Trạng thái: <b style="color:${TC[d.status]}">${d.status.toUpperCase()}</b></div>
+    <div>Nhiệt độ: ${d.temp} °C</div>
+    <div>Áp suất: ${d.pres} kPa</div>
+    <div>Độ rung: ${d.vib} mm/s</div>`
+                : `<div class="sn">${d.name}</div>
     <div>Status: <b style="color:${TC[d.status]}">${d.status.toUpperCase()}</b></div>
-    <div>🌡️ Temp: ${d.temp} °C</div>
-    <div>📊 Pressure: ${d.pres} kPa</div>
-    <div>📳 Vibration: ${d.vib} mm/s</div>`;
-            if (d.wl !== null) html += `<div>💧 Water Level: ${d.wl} m</div>`;
-            if (d.fl !== null) html += `<div>🌀 Flow: ${d.fl} m³/s</div>`;
+    <div>Temp: ${d.temp} °C</div>
+    <div>Pressure: ${d.pres} kPa</div>
+    <div>Vibration: ${d.vib} mm/s</div>`;
             tip.innerHTML = html;
             tip.style.left = Math.min(x + 14, innerWidth - 270) + 'px';
             tip.style.top = Math.min(y + 14, innerHeight - 220) + 'px';
@@ -694,38 +783,88 @@
            UI BUTTONS
            =========================================================== */
         let showS = true, wireF = false, animW = true, fogOn = true;
+        let uiLang = 'vi';
+
+        const I18N = {
+            en: {
+                sensors: 'Sensors',
+                wave: 'Water Anim',
+                fog: 'Fog',
+                on: 'ON',
+                off: 'OFF',
+                bar: 'Hydropower Plant - Interactive 3D Simulation'
+            },
+            vi: {
+                sensors: 'Hiển thị cảm biến',
+                wave: 'Dòng chảy hạ lưu',
+                fog: 'Sương Mù',
+                on: 'BẬT',
+                off: 'TẮT',
+                bar: 'Nhà máy thủy điện - Mô phỏng 3D'
+            }
+        };
+
+        function updateLangButtons() {
+            const t = I18N[uiLang];
+            document.getElementById('b-sens').textContent = `📡 ${t.sensors}: ${showS ? t.on : t.off}`;
+            document.getElementById('b-wave').textContent = `🌊 ${t.wave}: ${animW ? t.on : t.off}`;
+            document.getElementById('b-fog').textContent = `🌫️ ${t.fog}: ${fogOn ? t.on : t.off}`;
+            document.getElementById('b-lang').textContent = uiLang === 'en' ? '🌐 Tiếng Việt' : '🌐 English';
+            document.getElementById('info-title').textContent = uiLang === 'vi' ? '🏗️ Dữ liệu hiện tại' : '🏗️ Current Data';
+            document.getElementById('i-dam').textContent = uiLang === 'vi' ? 'Cao trình đập: 160 m' : 'Dam elevation: 160m';
+            document.getElementById('i-res').textContent = uiLang === 'vi'
+                ? `Mực nước hồ: ${C.water.resLvl.toFixed(1)} m`
+                : `Reservoir level: ${C.water.resLvl.toFixed(1)} m`;
+            document.getElementById('i-cap').textContent = uiLang === 'vi'
+                ? 'Dung tích hồ: 34.6 triệu m³'
+                : 'Reservoir capacity: 34.6 million m³';
+            document.getElementById('i-down').textContent = uiLang === 'vi'
+                ? `Mực nước hạ lưu: ${C.water.rivLvl} m`
+                : `Downstream water level: ${C.water.rivLvl} m`;
+            document.getElementById('i-rain').textContent = uiLang === 'vi' ? 'Lượng mưa hiện tại: 0 mm' : 'Current rainfall: 0 mm';
+            document.getElementById('i-gate').textContent = uiLang === 'vi' ? 'Độ mở cống: 23 cm' : 'Gate opening: 23 cm';
+            document.getElementById('s-cnt').textContent = uiLang === 'vi' ? '📡 Cảm biến: 4/5 hoạt động' : '📡 Sensors: 4/5 active';
+            document.getElementById('s-warn').textContent = uiLang === 'vi' ? '⚠️ Cảnh báo: 1 cảm biến' : '⚠️ Warning: 1 sensor';
+            document.getElementById('bar').textContent = t.bar;
+            document.getElementById('lg-title').textContent = uiLang === 'vi' ? 'Trạng thái' : 'Status';
+            document.getElementById('lg-normal').textContent = uiLang === 'vi' ? 'Bình thường' : 'Normal';
+            document.getElementById('lg-disconnect').textContent = uiLang === 'vi' ? 'Mất kết nối' : 'Disconnected';
+            document.getElementById('lg-critical').textContent = uiLang === 'vi' ? 'Cảnh báo vượt ngưỡng' : ' Threshold alert';
+        }
 
         document.getElementById('b-sens').onclick = function () {
             showS = !showS; sGrp.visible = showS;
-            this.textContent = '📡 Sensors ' + (showS ? 'ON' : 'OFF');
+            updateLangButtons();
             this.classList.toggle('active', showS);
             if (!showS) tip.style.display = 'none';
         };
         document.getElementById('b-wire').onclick = function () {
             wireF = !wireF;
             allMats.forEach(m => { m.wireframe = wireF; });
-            this.textContent = '🔲 Wireframe ' + (wireF ? 'ON' : 'OFF');
+            this.textContent = '🔲 Wireframe :' + (wireF ? 'ON' : 'OFF');
             this.classList.toggle('active', wireF);
         };
         document.getElementById('b-wave').onclick = function () {
             animW = !animW;
-            this.textContent = '🌊 Water Anim ' + (animW ? 'ON' : 'OFF');
+            updateLangButtons();
             this.classList.toggle('active', animW);
         };
         document.getElementById('b-fog').onclick = function () {
             fogOn = !fogOn;
             scene.fog = fogOn ? new THREE.FogExp2(0x7fbde8, .00048) : null;
-            this.textContent = '🌫️ Fog ' + (fogOn ? 'ON' : 'OFF');
+            updateLangButtons();
             this.classList.toggle('active', fogOn);
         };
+        document.getElementById('b-lang').onclick = function () {
+            uiLang = uiLang === 'en' ? 'vi' : 'en';
+            updateLangButtons();
+        };
+        updateLangButtons();
 
         /* ===========================================================
            PERIODIC UPDATES
            =========================================================== */
         setInterval(updateSensors, 2000); updateSensors();
-        setInterval(() => {
-            document.getElementById('s-time').textContent = '🕐 ' + new Date().toLocaleTimeString();
-        }, 1000);
 
         /* ===========================================================
            ANIMATION LOOP
@@ -755,9 +894,9 @@
                     for (let i = 0; i < rp.count; i++) {
                         const x = rp.getX(i), y = rp.getY(i);
                         rp.setZ(i,
-                            Math.sin(x * 0.12 + t * 4.5) +   // sóng ngang mạnh
-                            Math.sin(y * 0.05 + t * 3.2) * 2.0 +   // dòng chảy chính
-                            Math.cos((x + y) * 0.03 + t * 5.5) * 0.8
+                            Math.sin(x * 0.14 + t * 7.2) * 1.2 +
+                            Math.sin(y * 0.07 + t * 5.8) * 2.8 +
+                            Math.cos((x + y) * 0.04 + t * 8.1) * 1.0
                         )
                     }
                     rp.needsUpdate = true;
